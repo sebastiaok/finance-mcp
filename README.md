@@ -12,7 +12,11 @@ US/KR 주식 포트폴리오 리서치용 MCP 서버 (FastMCP, Python). 학습�
 | `get_news(ticker, limit)` | 최근 뉴스 헤드라인 |
 | `portfolio://holdings` (리소스) | 보유 종목 목록 (portfolio.json) |
 
-KR(DART·pykrx)은 2주차 확장 예정 — `market="KR"` 파라미터 자리만 잡아둔 상태.
+`market="US"`(기본, yfinance·SEC EDGAR) / `market="KR"`(DART·pykrx) 분기.
+
+**KR (6자리 종목코드, 예: `005930`)** — 2주차 실호출 검증 완료:
+- `get_filings` / `get_financials` → DART OpenAPI (`DART_API_KEY` 필요). 최초 1회 corp_code 매핑을 다운로드해 캐시한다.
+- `get_quote` → pykrx. 종가·거래량은 정상. **PER/PBR/EPS/BPS·시가총액은 KRX가 로그인(KRX_ID/KRX_PW)을 요구하도록 바뀌어 현재 조용히 생략됨** — 시세 조회 자체는 동작.
 
 ## 설치·실행
 
@@ -51,3 +55,5 @@ uv run fastmcp dev src/finance_mcp/server.py
 - `FINANCE_MCP_PORTFOLIO` — portfolio.json 경로 오버라이드
 - `FINANCE_MCP_USER_AGENT` — SEC 요청용 User-Agent (이메일 포함 권장)
 - `FINANCE_MCP_NO_VERIFY` — `1`로 설정하면 SSL 검증 비활성화 (회사 프록시 등 자체 서명 인증서 환경용)
+- `DART_API_KEY` — KR 공시·재무 조회용 DART OpenAPI 키 (https://opendart.fss.or.kr 무료 발급)
+- `FINANCE_MCP_CACHE` — corp_code 매핑 캐시 경로 오버라이드 (기본 `~/.cache/finance-mcp`)

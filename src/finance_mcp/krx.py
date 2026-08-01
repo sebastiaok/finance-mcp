@@ -2,6 +2,11 @@
 
 pykrx는 KRX 웹을 스크래핑하므로 느리고 깨질 수 있다 → 함수 안에서 lazy import
 (서버 기동·테스트가 pykrx 설치 여부에 의존하지 않도록).
+
+알려진 제약(2026-08 검증): OHLCV(종가·거래량)는 무인증 조회 가능하나,
+get_market_fundamental_by_date(PER/PBR/EPS/BPS)·get_market_cap_by_date(시가총액)는
+KRX가 로그인(KRX_ID/KRX_PW)을 요구하도록 바뀌어 무인증 시 빈 DataFrame으로 실패한다.
+fetch_quote_kr은 이를 graceful하게 처리(빈 값 생략)하고 종가·거래량은 정상 반환한다.
 """
 
 from __future__ import annotations

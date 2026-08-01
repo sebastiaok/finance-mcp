@@ -26,7 +26,8 @@ VIEWER = "https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}"
 REPRT_ANNUAL = "11011"
 
 # 손익계산서에서 뽑을 핵심 계정 (연결 기준)
-_KEY_ACCOUNTS = ["매출액", "영업이익", "법인세차감전 순이익", "당기순이익"]
+# 계정명은 공백을 제거해 비교한다(extract_financials). DART 표기: "법인세비용차감전순이익".
+_KEY_ACCOUNTS = ["매출액", "영업이익", "법인세비용차감전순이익", "당기순이익"]
 
 
 def _cache_path() -> Path:
