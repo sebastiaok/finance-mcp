@@ -2,6 +2,9 @@
 
 US/KR 주식 포트폴리오 리서치용 MCP 서버 (FastMCP, Python). 학습용 사이드 프로젝트.
 
+> 이 서버를 도구로 쓰는 상위 프로젝트: [earnings-agent](https://github.com/sebastiaok/earnings-agent) —
+> 이 서버를 붙인 멀티 에이전트로 단일 vs 팀 실적 리포트를 LLM-as-judge로 정량 비교(팀이 3종목 전부 우세, 차이는 강세/약세 균형 축).
+
 ## 도구
 
 | 이름 | 설명 |
