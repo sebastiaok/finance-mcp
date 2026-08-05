@@ -11,20 +11,21 @@ import os
 
 import httpx
 
+from finance_mcp import _http
+
 USER_AGENT = os.environ.get(
     "FINANCE_MCP_USER_AGENT", "finance-mcp/0.1 (personal research; contact via GitHub)"
 )
 TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 
-_NO_VERIFY = os.environ.get("FINANCE_MCP_NO_VERIFY", "").lower() in ("1", "true", "yes")
 _HEADERS = {"User-Agent": USER_AGENT}
 _cik_cache: dict[str, str] = {}
 
 
 def _http_get(url: str, timeout: int = 30) -> httpx.Response:
-    """httpx GET 요청. FINANCE_MCP_NO_VERIFY=1 이면 SSL 검증 건너뜀."""
-    resp = httpx.get(url, headers=_HEADERS, timeout=timeout, verify=not _NO_VERIFY)
+    """SEC용 GET (식별 User-Agent 포함). SSL 검증 토글은 _http에서 관리."""
+    resp = _http.get(url, headers=_HEADERS, timeout=timeout)
     resp.raise_for_status()
     return resp
 

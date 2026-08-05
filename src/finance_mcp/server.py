@@ -38,16 +38,26 @@ def get_quote(ticker: str, market: str = "US") -> str:
 
 
 @mcp.tool()
-def get_financials(ticker: str, market: str = "US") -> str:
-    """종목의 핵심 재무 지표(매출·마진·현금흐름·부채·ROE)를 요약한다.
+def get_financials(ticker: str, market: str = "US", period: str = "annual") -> str:
+    """종목의 핵심 재무 지표를 요약한다. period="quarterly"면 최근 분기 실적을 시계열로 반환한다.
+
+    어닝 서프라이즈·YoY(전년동기) 흐름을 보려면 period="quarterly"를 사용하라.
 
     Args:
         ticker: 종목 티커 (US: AAPL / KR: 6자리 종목코드, 예 005930)
-        market: "US"(yfinance TTM) 또는 "KR"(DART 사업보고서 연간 — DART_API_KEY 필요)
+        market: "US"(yfinance) 또는 "KR"(DART — DART_API_KEY 필요)
+        period: "annual"(연간·기본: US=TTM 요약 / KR=사업보고서) 또는
+            "quarterly"(최근 분기: US=최근 5개 분기 손익 / KR=최신 분기보고서, 어닝 서프라이즈 확인용)
     """
+    quarterly = period.lower() == "quarterly"
     if market.upper() == "KR":
+        if quarterly:
+            corp_name, rows = dart.latest_quarterly(ticker)
+            return dart.format_financials(corp_name, rows, ticker, note=dart._QUARTERLY_NOTE)
         corp_name, rows = dart.annual_financials(ticker)
         return dart.format_financials(corp_name, rows, ticker)
+    if quarterly:
+        return market_data.fetch_financials_quarterly(ticker)
     return market_data.fetch_financials(ticker)
 
 

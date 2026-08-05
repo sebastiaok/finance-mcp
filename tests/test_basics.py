@@ -2,7 +2,33 @@
 
 import json
 
-from finance_mcp import edgar, market_data, portfolio
+from finance_mcp import _http, edgar, market_data, portfolio
+
+
+def test_http_get_honors_no_verify(monkeypatch):
+    """_http.get이 NO_VERIFY 값에 따라 verify를 정확히 넘기는지 (DART SSL 버그 회귀 방지)."""
+    captured = {}
+
+    def fake_get(url, **kwargs):
+        captured.clear()
+        captured.update(kwargs)
+        captured["url"] = url
+
+        class _Resp:
+            def raise_for_status(self):
+                pass
+
+        return _Resp()
+
+    monkeypatch.setattr(_http.httpx, "get", fake_get)
+
+    monkeypatch.setattr(_http, "NO_VERIFY", True)
+    _http.get("https://x", params={"a": 1})
+    assert captured["verify"] is False  # NO_VERIFY=참 → 검증 끔
+
+    monkeypatch.setattr(_http, "NO_VERIFY", False)
+    _http.get("https://x")
+    assert captured["verify"] is True  # 기본 → 검증 켬
 
 
 def test_pad_cik():
@@ -54,6 +80,48 @@ def test_format_fields():
 def test_format_fields_empty():
     out = market_data.format_fields({}, market_data._QUOTE_FIELDS, "ZZZZ")
     assert "데이터 없음" in out
+
+
+def test_format_quarterly():
+    records = [
+        {"period": "2026-06-30", "매출": 109_417_000_000.0, "영업이익": 35_695_000_000.0, "희석EPS": 2.02},
+        {"period": "2026-03-31", "매출": 111_184_000_000.0, "희석EPS": 2.01},
+    ]
+    out = market_data.format_quarterly(records, "aapl")
+    assert out.startswith("[AAPL 분기 재무")
+    assert "최근 2개 분기" in out
+    assert "- 2026-06-30:" in out
+    assert "매출 109,417,000,000" in out  # ≥1e6 → 콤마 포맷
+    assert "희석EPS 2.02" in out  # 소수 → %.4g
+
+
+def test_format_quarterly_empty():
+    out = market_data.format_quarterly([], "ZZZZ")
+    assert "분기 재무 데이터 없음" in out
+
+
+def test_extract_quarterly():
+    import pandas as pd
+
+    cols = [pd.Timestamp("2026-06-30"), pd.Timestamp("2026-03-31"), pd.Timestamp("2025-12-31")]
+    df = pd.DataFrame(
+        {
+            cols[0]: [109_417_000_000.0, 35_695_000_000.0, 2.02],
+            cols[1]: [111_184_000_000.0, 35_885_000_000.0, float("nan")],  # EPS 결측
+            cols[2]: [143_756_000_000.0, 50_852_000_000.0, 2.84],
+        },
+        index=["Total Revenue", "Operating Income", "Diluted EPS"],
+    )
+    recs = market_data.extract_quarterly(df, n=2)
+    assert len(recs) == 2  # 최근 2개 분기만
+    assert recs[0]["period"] == "2026-06-30"
+    assert recs[0]["매출"] == 109_417_000_000.0
+    assert recs[0]["희석EPS"] == 2.02
+    assert "희석EPS" not in recs[1]  # NaN은 제외
+
+
+def test_extract_quarterly_empty():
+    assert market_data.extract_quarterly(None) == []
 
 
 def test_format_news_both_shapes():

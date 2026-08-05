@@ -10,12 +10,16 @@ US/KR 주식 포트폴리오 리서치용 MCP 서버 (FastMCP, Python). 학습�
 | 이름 | 설명 |
 |---|---|
 | `get_quote(ticker, market)` | 현재가·밸류에이션 요약 (yfinance) |
-| `get_financials(ticker, market)` | 매출·마진·현금흐름·부채 요약 |
+| `get_financials(ticker, market, period)` | 재무 요약. `period="annual"`(기본) / `period="quarterly"`(최근 분기·YoY) |
 | `get_filings(ticker, form_type, limit, market)` | SEC 공시 목록 + 원문 URL |
 | `get_news(ticker, limit)` | 최근 뉴스 헤드라인 |
 | `portfolio://holdings` (리소스) | 보유 종목 목록 (portfolio.json) |
 
 `market="US"`(기본, yfinance·SEC EDGAR) / `market="KR"`(DART·pykrx) 분기.
+
+**분기 실적 (`get_financials(..., period="quarterly")`)** — 어닝 서프라이즈·YoY 확인용:
+- US: `quarterly_income_stmt`에서 최근 5개 분기 손익(매출·매출총이익·영업이익·순이익·희석EPS)을 최신순 시계열로 반환. 같은 항목을 4행 아래(=전년 동기)와 비교하면 YoY가 보인다.
+- KR: DART 최신 분기보고서(3분기 11014 → 반기 11012 → 1분기 11013 순으로 자동 탐색)의 4계정을 당기/전기(=전년 동기)로 반환. **분기 수치는 사업연도 누적 기준**일 수 있어 그 주의 문구를 함께 출력한다. (분기 순이익 계정은 DART에서 `분기순이익`/`반기순이익`으로 표기됨.)
 
 **KR (6자리 종목코드, 예: `005930`)** — 2주차 실호출 검증 완료:
 - `get_filings` / `get_financials` → DART OpenAPI (`DART_API_KEY` 필요). 최초 1회 corp_code 매핑을 다운로드해 캐시한다.

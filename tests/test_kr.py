@@ -61,9 +61,54 @@ def test_extract_financials_filters_and_dedupes():
     assert rows[0]["current"] == "300"
 
 
+def test_extract_financials_quarterly_fields():
+    """분기 리포트: frmtrm_amount는 비고 frmtrm_q_amount(전년동기)에 비교값, 순이익은 '분기순이익' 표기."""
+    payload = {
+        "status": "000",
+        "list": [
+            {"sj_div": "IS", "account_nm": "매출액", "thstrm_amount": "133", "frmtrm_amount": "",
+             "frmtrm_q_amount": "79", "thstrm_nm": "제 58 기 1분기"},
+            {"sj_div": "IS", "account_nm": "분기순이익", "thstrm_amount": "47", "frmtrm_amount": "",
+             "frmtrm_q_amount": "8", "thstrm_nm": "제 58 기 1분기"},
+            {"sj_div": "CIS", "account_nm": "분기순이익", "thstrm_amount": "47", "frmtrm_q_amount": "8"},  # 중복 → 제외
+        ],
+    }
+    rows = dart.extract_financials(payload)
+    accounts = [r["account"] for r in rows]
+    assert accounts == ["매출액", "분기순이익"]  # 분기순이익 매칭됨, CIS 중복 제외
+    assert rows[0]["previous"] == "79"  # frmtrm 비었으면 frmtrm_q로 폴백
+    assert rows[1]["account"] == "분기순이익"
+
+
 def test_format_financials_empty():
     out = dart.format_financials("삼성전자", [], "005930")
     assert "데이터 없음" in out
+
+
+def test_format_financials_quarterly_label_and_note():
+    rows = [
+        {"account": "매출액", "current": "790000", "previous": "740000", "period": "제 57 기 3분기"},
+        {"account": "영업이익", "current": "90000", "previous": "83000", "period": "제 57 기 3분기"},
+    ]
+    out = dart.format_financials("삼성전자", rows, "005930", note=dart._QUARTERLY_NOTE)
+    assert "제 57 기 3분기" in out  # 기간 라벨이 헤더에 그대로 노출
+    assert "누적 기준" in out  # 분기 누적 주의 문구
+    assert "매출액: 당기 790000 / 전기 740000" in out
+
+
+def test_reprt_quarterly_codes():
+    assert dart.REPRT_QUARTERLY == {"q1": "11013", "half": "11012", "q3": "11014"}
+
+
+def test_quarterly_candidates_order():
+    from datetime import date
+
+    cands = dart._quarterly_candidates(date(2026, 8, 5))
+    # 올해(2026) 3분기→반기→1분기 먼저, 그다음 작년(2025) 순
+    assert cands[0] == (2026, "11014")
+    assert cands[2] == (2026, "11013")
+    assert cands[3] == (2025, "11014")
+    assert len(cands) == 6
 
 
 def test_format_quote_kr():

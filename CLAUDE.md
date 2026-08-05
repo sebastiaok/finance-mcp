@@ -15,7 +15,7 @@ US/KR 주식 리서치 MCP 서버. 학습 목적 사이드 프로젝트 (5주 �
 - SEC 요청에는 반드시 식별 가능한 User-Agent 사용 (edgar.py의 USER_AGENT).
 
 ## 환경 변수
-- `FINANCE_MCP_NO_VERIFY=1` — SSL 검증 비활성화 (회사 프록시/자체 서명 인증서 환경). yfinance(curl_cffi)와 httpx 모두 적용.
+- `FINANCE_MCP_NO_VERIFY=1` — SSL 검증 비활성화 (회사 프록시/자체 서명 인증서 환경). 플래그 파싱은 `_http.py` 한 곳에서 관리하며 yfinance(curl_cffi)·SEC EDGAR·DART(httpx) 전 경로에 적용된다.
 - `FINANCE_MCP_USER_AGENT` — SEC EDGAR User-Agent (이메일 포함 필수).
 - `.env` 파일에 설정해두면 편리. (`.gitignore`에 포함)
 
